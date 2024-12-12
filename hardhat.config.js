@@ -1,9 +1,8 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
-const PRIVATE_KEY = process.env.PRIVATE_KEY || "";
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
-const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID || "";
+
+const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
 
 module.exports = {
   solidity: {
@@ -11,43 +10,36 @@ module.exports = {
     settings: {
       optimizer: {
         enabled: true,
-        runs: 200
+        runs: 200,
       },
-      viaIR: true
-    }
+      viaIR: true,
+    },
   },
   networks: {
     hardhat: {
       chainId: 31337,
-      allowUnlimitedContractSize: true
+      allowUnlimitedContractSize: true,
     },
-    ethereum: {
-      url: `https://mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 1
+    sepolia: {
+      url: `https://sepolia.infura.io/v3/${INFURA_PROJECT_ID}`,
+      account: [process.env.SEPOLIA_PRIVATE_KEY],
+      chainId: 11155111,
+    },
+    polygonAmoy: {
+      url: `https://polygon-amoy.infura.io/v3/${INFURA_PROJECT_ID}`,
+      account: [process.env.POLYGON_PRIVATE_KEY],
+      chainId: 80002,
     },
     arbitrum: {
-      url: `https://arbitrum-mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 42161
+      url: `https://arbitrum-sepolia.infura.io/v3/${INFURA_PROJECT_ID}`,
+      account: [process.env.ARBITRUM_PRIVATE_KEY],
+      chainId: 421614,
     },
-    optimism: {
-      url: `https://optimism-mainnet.infura.io/v3/${INFURA_PROJECT_ID}`,
-      accounts: PRIVATE_KEY ? [PRIVATE_KEY] : [],
-      chainId: 10
-    }
-  },
-  etherscan: {
-    apiKey: {
-      mainnet: ETHERSCAN_API_KEY,
-      arbitrumOne: ETHERSCAN_API_KEY,
-      optimisticEthereum: ETHERSCAN_API_KEY
-    }
   },
   paths: {
     sources: "./contracts",
     tests: "./test",
     cache: "./cache",
-    artifacts: "./artifacts"
-  }
+    artifacts: "./artifacts",
+  },
 };
