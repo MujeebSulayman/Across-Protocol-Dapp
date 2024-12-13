@@ -4,28 +4,29 @@
 A secure, efficient cross-chain token bridge built on Across Protocol's infrastructure, enabling seamless asset transfers across multiple blockchain networks.
 
 ## Key Features
-- 🌉 Multi-Chain Support
-- 💧 Liquidity Provider Management
+- 🌉 Multi-Chain Token Transfers
 - 🔒 Advanced Security Mechanisms
-- 💸 Flexible Bridge Fee Configuration
-- 🔄 Comprehensive Transfer Tracking
+- 📊 Comprehensive Transfer Tracking
+- 💸 Dynamic Fee Calculation
 
 ## Architecture Components
 ### Core Infrastructure
-- **V3 Core Router**: Cross-chain transfer routing
-- **Spoke Pools**: Network-specific liquidity pools
-- **Hub Pool**: Central liquidity management
-
-### Liquidity Management
-- Dynamic liquidity provider tracking
-- Configurable liquidity addition/withdrawal
-- Total liquidity monitoring
+- **Across Protocol Integration**
+  - Leverages Across Protocol's native liquidity infrastructure
+  - Uses V3 Core Router for cross-chain transfers
+  - Seamless liquidity management
 
 ### Transfer Mechanism
 - Unique transfer ID generation
 - Detailed transfer metadata tracking
-- Bridge fee calculation
+- Dynamic fee estimation
 - Cross-chain transfer execution
+
+### Liquidity Management
+- **Fully Managed by Across Protocol**
+  - No custom liquidity provider management
+  - Utilizes Across Protocol's battle-tested liquidity pools
+  - Automatic liquidity routing and optimization
 
 ## Transfer Tracking
 - Enhanced transfer status tracking

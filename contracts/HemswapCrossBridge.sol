@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 /**
  * @title HemswapCrossBridge
  * @notice Cross-Chain Bridge implementing Across Protocol's infrastructure
- * @dev Supports cross-chain token transfers with advanced liquidity management
+ * @dev Supports cross-chain token transfers using Across Protocol's liquidity
  */
 contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     // Across Protocol Core Components
@@ -18,12 +18,7 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     SpokePoolInterface public spokePool;
     address public hubPool;
 
-    // Liquidity Provider Management
-    mapping(address => uint256) public liquidityProviders;
-    mapping(address => bool) public authorizedLiquidityProviders;
-    uint256 public totalLiquidity;
-
-    // Enhanced Transfer Tracking
+    // Transfer Tracking
     struct CrossChainTransfer {
         bytes32 transferId;
         address sender;
@@ -44,14 +39,14 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
 
     // Mapping to store transfers
     mapping(bytes32 => CrossChainTransfer) public transfers;
-
+    
     // Mapping to track user's transfers
     mapping(address => bytes32[]) public userTransfers;
-
+    
     // Total number of transfers
     uint256 public totalTransfers;
 
-    // Events with more comprehensive information
+    // Events
     event TransferInitiated(
         bytes32 indexed transferId,
         address indexed sender,
@@ -69,11 +64,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         string message
     );
 
-    event LiquidityAdded(address provider, uint256 amount);
-    event LiquidityRemoved(address provider, uint256 amount);
-    event LiquidityProviderAdded(address provider);
-    event LiquidityProviderRemoved(address provider);
-
     constructor(
         address _coreRouterAddress,
         address _spokePoolAddress,
@@ -86,119 +76,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         coreRouter = V3CoreRouterInterface(_coreRouterAddress);
         spokePool = SpokePoolInterface(_spokePoolAddress);
         hubPool = _hubPoolAddress;
-    }
-
-    /**
-     * @notice Add an authorized liquidity provider
-     * @param provider Address of the liquidity provider to authorize
-     */
-    function addLiquidityProvider(address provider) external onlyOwner {
-        require(provider != address(0), "Invalid provider address");
-        require(
-            !authorizedLiquidityProviders[provider],
-            "Provider already authorized"
-        );
-
-        authorizedLiquidityProviders[provider] = true;
-
-        emit LiquidityProviderAdded(provider);
-    }
-
-    /**
-     * @notice Remove an authorized liquidity provider
-     * @param provider Address of the liquidity provider to remove
-     */
-    function removeLiquidityProvider(address provider) external onlyOwner {
-        require(
-            authorizedLiquidityProviders[provider],
-            "Provider not authorized"
-        );
-
-        authorizedLiquidityProviders[provider] = false;
-
-        emit LiquidityProviderRemoved(provider);
-    }
-
-    /**
-     * @notice Add liquidity to the bridge
-     * @param token ERC20 token address
-     * @param amount Liquidity amount
-     */
-    function addLiquidity(address token, uint256 amount) external nonReentrant {
-        // Restrict liquidity addition to authorized providers
-        require(
-            authorizedLiquidityProviders[msg.sender],
-            "Not an authorized liquidity provider"
-        );
-        require(amount > 0, "Invalid liquidity amount");
-
-        // Validate token is a contract
-        require(token.code.length > 0, "Invalid token address");
-
-        // Check sender's token balance
-        uint256 senderBalance = IERC20(token).balanceOf(msg.sender);
-        require(senderBalance >= amount, "Insufficient token balance");
-
-        // Check sender's token allowance
-        uint256 currentAllowance = IERC20(token).allowance(
-            msg.sender,
-            address(this)
-        );
-        require(currentAllowance >= amount, "Insufficient token allowance");
-
-        // Perform token transfer with safety checks
-        bool transferSuccess = IERC20(token).transferFrom(
-            msg.sender,
-            address(this),
-            amount
-        );
-        require(transferSuccess, "Token transfer failed");
-
-        // Verify the contract received the correct amount
-        uint256 receivedBalance = IERC20(token).balanceOf(address(this));
-        require(
-            receivedBalance >= amount,
-            "Received less tokens than expected"
-        );
-
-        // Update liquidity tracking
-        liquidityProviders[msg.sender] += amount;
-        totalLiquidity += amount;
-
-        emit LiquidityAdded(msg.sender, amount);
-    }
-
-    /**
-     * @notice Remove liquidity from the bridge
-     * @param token ERC20 token address
-     * @param amount Liquidity amount to withdraw
-     */
-    function removeLiquidity(
-        address token,
-        uint256 amount
-    ) external nonReentrant {
-        // Restrict liquidity removal to authorized providers
-        require(
-            authorizedLiquidityProviders[msg.sender],
-            "Not an authorized liquidity provider"
-        );
-        require(
-            liquidityProviders[msg.sender] >= amount,
-            "Insufficient liquidity"
-        );
-
-        // Validate token is a contract
-        require(token.code.length > 0, "Invalid token address");
-
-        // Update liquidity tracking
-        liquidityProviders[msg.sender] -= amount;
-        totalLiquidity -= amount;
-
-        // Transfer tokens back to the provider
-        bool transferSuccess = IERC20(token).transfer(msg.sender, amount);
-        require(transferSuccess, "Token transfer failed");
-
-        emit LiquidityRemoved(msg.sender, amount);
     }
 
     /**
@@ -245,6 +122,42 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
      */
     function getTotalTransfers() external view returns (uint256) {
         return totalTransfers;
+    }
+
+    /**
+     * @notice Get estimated bridge fee from Across Protocol
+     * @param token Token address for transfer
+     * @param amount Transfer amount
+     * @param destinationChainId Target blockchain network ID
+     * @return estimatedFee Estimated fee in the native token
+     */
+    function getEstimatedBridgeFee(
+        address token,
+        uint256 amount,
+        uint256 destinationChainId
+    ) external view returns (uint256 estimatedFee) {
+        estimatedFee = coreRouter.calculateDepositV3Fee(
+            token,
+            amount,
+            destinationChainId
+        );
+    }
+
+    /**
+     * @notice Update Across Protocol contract addresses
+     */
+    function updateProtocolAddresses(
+        address _newCoreRouter,
+        address _newSpokePool,
+        address _newHubPool
+    ) external onlyOwner {
+        require(_newCoreRouter != address(0), "Invalid Core Router");
+        require(_newSpokePool != address(0), "Invalid Spoke Pool");
+        require(_newHubPool != address(0), "Invalid Hub Pool");
+
+        coreRouter = V3CoreRouterInterface(_newCoreRouter);
+        spokePool = SpokePoolInterface(_newSpokePool);
+        hubPool = _newHubPool;
     }
 
     /**
@@ -394,44 +307,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
             // Catch any other unexpected errors
             revert("Cross-chain transfer failed unexpectedly");
         }
-    }
-
-    /**
-     * @notice Get estimated bridge fee from Across Protocol
-     * @param token Token address for transfer
-     * @param amount Transfer amount
-     * @param destinationChainId Target blockchain network ID
-     * @return estimatedFee Estimated fee in the native token
-     */
-    function getEstimatedBridgeFee(
-        address token,
-        uint256 amount,
-        uint256 destinationChainId
-    ) external view returns (uint256 estimatedFee) {
-        // Use Across Protocol's fee estimation method
-        // Note: Actual implementation depends on Across Protocol's interface
-        estimatedFee = coreRouter.calculateDepositV3Fee(
-            token,
-            amount,
-            destinationChainId
-        );
-    }
-
-    /**
-     * @notice Update Across Protocol contract addresses
-     */
-    function updateProtocolAddresses(
-        address _newCoreRouter,
-        address _newSpokePool,
-        address _newHubPool
-    ) external onlyOwner {
-        require(_newCoreRouter != address(0), "Invalid Core Router");
-        require(_newSpokePool != address(0), "Invalid Spoke Pool");
-        require(_newHubPool != address(0), "Invalid Hub Pool");
-
-        coreRouter = V3CoreRouterInterface(_newCoreRouter);
-        spokePool = SpokePoolInterface(_newSpokePool);
-        hubPool = _newHubPool;
     }
 
     // Fallback and receive functions
