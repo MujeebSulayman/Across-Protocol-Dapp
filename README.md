@@ -27,6 +27,27 @@ A secure, efficient cross-chain token bridge built on Across Protocol's infrastr
 - Bridge fee calculation
 - Cross-chain transfer execution
 
+## Transfer Tracking
+- Enhanced transfer status tracking
+- Comprehensive transfer metadata
+- Transfer status enum:
+  - `INITIATED`: Transfer started
+  - `COMPLETED`: Transfer successful
+  - `FAILED`: Transfer unsuccessful
+
+### Transfer Tracking Methods
+- `getUserTransfers(address user, uint256 limit)`: Retrieve user's recent transfers
+- `getTransferDetails(bytes32 transferId)`: Get specific transfer details
+- `getTotalTransfers()`: Get total number of bridge transfers
+
+### Transfer Events
+- `TransferInitiated`: Detailed transfer start information
+- `TransferStatusUpdated`: Real-time transfer status updates
+
+## Fee Management
+- Dynamic fee calculation via Across Protocol Core Router
+- Relies on `coreRouter.calculateDepositV3Fee()` for accurate fee estimation
+
 ## Security Considerations
 - ReentrancyGuard protection
 - Ownership-based access control
@@ -67,3 +88,6 @@ Experimental implementation. Use at your own risk.
 
 ## License
 MIT License
+
+## Author
+[Mujeeb Sulayman](https://x.com/thehemjay)
