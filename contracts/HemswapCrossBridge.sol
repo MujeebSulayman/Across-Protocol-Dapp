@@ -137,11 +137,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         hubPool = _newHubPool;
     }
 
-    /**
-     * @notice Reset token approval for a specific token
-     * @param token Token address to reset approval
-     * @param spender Address to reset approval for
-     */
     function resetTokenApproval(address token, address spender) external {
         IERC20(token).forceApprove(spender, 0);
     }
@@ -245,7 +240,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
             block.timestamp
         );
 
-        // Reset approval after transfer to prevent potential reuse
         IERC20(token).forceApprove(address(this), 0);
 
         // Execute cross-chain transfer via Across Protocol
@@ -280,7 +274,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
                 )
             );
         } catch {
-            // Update transfer status to failed
             transfers[transferId].status = TransferStatus.FAILED;
             emit TransferStatusUpdated(
                 transferId,
@@ -291,10 +284,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         }
     }
 
-    /**
-     * @notice Get total number of transfers
-     * @return Total number of transfers initiated
-     */
     function getTotalTransfers() external view returns (uint256) {
         return totalTransfers;
     }
