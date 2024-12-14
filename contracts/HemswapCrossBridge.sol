@@ -39,10 +39,10 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
 
     // Mapping to store transfers
     mapping(bytes32 => CrossChainTransfer) public transfers;
-    
+
     // Mapping to track user's transfers
     mapping(address => bytes32[]) public userTransfers;
-    
+
     // Total number of transfers
     uint256 public totalTransfers;
 
