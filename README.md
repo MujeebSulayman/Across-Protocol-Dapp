@@ -12,62 +12,45 @@ A secure, efficient cross-chain token bridge built on Across Protocol's infrastr
 ## Architecture Components
 ### Core Infrastructure
 - **Across Protocol Integration**
-  - Leverages Across Protocol's native liquidity infrastructure
-  - Uses V3 Core Router for cross-chain transfers
-  - Seamless liquidity management
+  - Leverages Across Protocol's V3 Core Router
+  - Seamless cross-chain transfer execution
+  - Automatic liquidity management
 
 ### Transfer Mechanism
 - Unique transfer ID generation
 - Detailed transfer metadata tracking
-- Dynamic fee estimation
-- Cross-chain transfer execution
-
-### Liquidity Management
-- **Fully Managed by Across Protocol**
-  - No custom liquidity provider management
-  - Utilizes Across Protocol's battle-tested liquidity pools
-  - Automatic liquidity routing and optimization
+- Cross-chain transfer execution with status tracking
 
 ## Transfer Tracking
-- Enhanced transfer status tracking
-- Comprehensive transfer metadata
-- Transfer status enum:
-  - `INITIATED`: Transfer started
-  - `COMPLETED`: Transfer successful
-  - `FAILED`: Transfer unsuccessful
+Transfer statuses:
+- `INITIATED`: Transfer started
+- `COMPLETED`: Transfer successful
+- `FAILED`: Transfer unsuccessful
 
-### Transfer Tracking Methods
-- `getUserTransfers(address user, uint256 limit)`: Retrieve user's recent transfers
-- `getTransferDetails(bytes32 transferId)`: Get specific transfer details
+### Key Methods
+- `getUserTransfers()`: Retrieve user's recent transfers
+- `getTransferDetails()`: Get specific transfer details
 - `getTotalTransfers()`: Get total number of bridge transfers
 
-### Transfer Events
-- `TransferInitiated`: Detailed transfer start information
-- `TransferStatusUpdated`: Real-time transfer status updates
+## Security Features
+- SafeERC20 token handling
+- ReentrancyGuard protection
+- Ownership-based access control
+- Comprehensive input validation
 
 ## Fee Management
 - Dynamic fee calculation via Across Protocol Core Router
-- Relies on `coreRouter.calculateDepositV3Fee()` for accurate fee estimation
+- Estimated fee calculation through `getEstimatedBridgeFee()`
 
-## Security Considerations
-- ReentrancyGuard protection
-- Ownership-based access control
-- Maximum bridge fee limit
-- Comprehensive input validation
+## Deployment Requirements
+- Solidity 0.8.19
+- OpenZeppelin Contracts
+- Across Protocol Interfaces
 
-## Configuration
-### Constructor Parameters
-- `_coreRouterAddress`: Across Protocol Core Router address
-- `_spokePoolAddress`: Spoke Pool contract address
-- `_hubPoolAddress`: Hub Pool contract address
-- `_initialBridgeFee`: Initial bridge fee percentage
-
-### Environment Variables
-Refer to `.env` file for configuration:
+### Required Environment Variables
 - `PRIVATE_KEY`: Deployment wallet private key
-- `INFURA_PROJECT_ID`: Network access credentials
-- `ACROSS_HUB_POOL_ADDRESS`: Across Protocol Hub Pool
-- `ACROSS_SPOKE_POOL_ADDRESS`: Across Protocol Spoke Pool
+- `ACROSS_CORE_ROUTER`: Across Protocol Core Router address
+- `ACROSS_SPOKE_POOL`: Spoke Pool contract address
 
 ## Deployment
 ```bash

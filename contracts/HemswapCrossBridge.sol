@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import "@across-protocol/contracts/interfaces/V3CoreRouterInterface.sol";
 import "@across-protocol/contracts/interfaces/SpokePoolInterface.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -12,7 +13,10 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * @notice Cross-Chain Bridge implementing Across Protocol's infrastructure
  * @dev Supports cross-chain token transfers using Across Protocol's liquidity
  */
+
 contract HemswapCrossBridge is Ownable, ReentrancyGuard {
+    using SafeERC20 for IERC20;
+
     // Across Protocol Core Components
     V3CoreRouterInterface public coreRouter;
     SpokePoolInterface public spokePool;
@@ -37,16 +41,15 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         FAILED
     }
 
-    // Mapping to store transfers
+    // Store transfers
     mapping(bytes32 => CrossChainTransfer) public transfers;
 
-    // Mapping to track user's transfers
+    // Track user's transfers
     mapping(address => bytes32[]) public userTransfers;
 
-    // Total number of transfers
+    // Total transfers
     uint256 public totalTransfers;
 
-    // Events
     event TransferInitiated(
         bytes32 indexed transferId,
         address indexed sender,
@@ -90,7 +93,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     ) external view returns (bytes32[] memory userTransferList) {
         bytes32[] memory allUserTransfers = userTransfers[user];
 
-        // Determine the number of transfers to return
         uint256 transferCount = allUserTransfers.length;
         uint256 returnCount = limit > 0 && limit < transferCount
             ? limit
@@ -114,14 +116,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     ) external view returns (CrossChainTransfer memory transfer) {
         transfer = transfers[transferId];
         require(transfer.transferId != 0, "Transfer not found");
-    }
-
-    /**
-     * @notice Get total number of transfers
-     * @return Total number of transfers initiated
-     */
-    function getTotalTransfers() external view returns (uint256) {
-        return totalTransfers;
     }
 
     /**
@@ -161,12 +155,23 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     }
 
     /**
-     * @notice Initiate cross-chain token transfer
-     * @param token Token address
-     * @param amount Transfer amount
-     * @param recipient Destination wallet address
-     * @param destinationChainId Target blockchain network ID
+     * @notice Reset token approval for a specific token
+     * @param token Token address to reset approval
+     * @param spender Address to reset approval for
      */
+    function resetTokenApproval(address token, address spender) external {
+        IERC20(token).forceApprove(spender, 0);
+    }
+
+    function safeTokenApprove(
+        address token,
+        address spender,
+        uint256 amount
+    ) external {
+        IERC20(token).forceApprove(spender, 0);
+        IERC20(token).safeIncreaseAllowance(spender, amount);
+    }
+
     function bridgeTokens(
         address token,
         uint256 amount,
@@ -176,21 +181,17 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         require(amount > 0, "Invalid transfer amount");
         require(recipient != address(0), "Invalid recipient");
 
-        // Validate token is a contract
         require(token.code.length > 0, "Invalid token address");
 
-        // Check sender's token balance
         uint256 senderBalance = IERC20(token).balanceOf(msg.sender);
         require(senderBalance >= amount, "Insufficient token balance");
 
-        // Check sender's token allowance
         uint256 currentAllowance = IERC20(token).allowance(
             msg.sender,
             address(this)
         );
         require(currentAllowance >= amount, "Insufficient token allowance");
 
-        // Perform token transfer with safety checks
         bool transferSuccess = IERC20(token).transferFrom(
             msg.sender,
             address(this),
@@ -206,8 +207,8 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         );
 
         // Approve core router with additional safety checks
-        IERC20(token).approve(address(coreRouter), 0); // Clear previous approval
-        bool approveSuccess = IERC20(token).approve(
+        IERC20(token).forceApprove(address(coreRouter), 0);
+        bool approveSuccess = IERC20(token).safeIncreaseAllowance(
             address(coreRouter),
             amount
         );
@@ -245,14 +246,11 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
             status: TransferStatus.INITIATED
         });
 
-        // Track user's transfers
         userTransfers[msg.sender].push(transferId);
         userTransfers[recipient].push(transferId);
 
-        // Increment total transfers
         totalTransfers++;
 
-        // Emit enhanced transfer initiated event
         emit TransferInitiated(
             transferId,
             msg.sender,
@@ -264,6 +262,9 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
             block.timestamp
         );
 
+        // Reset approval after transfer to prevent potential reuse
+        IERC20(token).forceApprove(address(this), 0);
+
         // Execute cross-chain transfer via Across Protocol
         try
             coreRouter.depositV3{value: msg.value}(
@@ -272,10 +273,10 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
                 amount,
                 destinationChainId,
                 abi.encode(transferId),
-                0 // Let Across Protocol determine the fee
+                0
             )
         {
-            // Update transfer status to completed
+            // Update transfer status
             transfers[transferId].status = TransferStatus.COMPLETED;
             emit TransferStatusUpdated(
                 transferId,
@@ -283,14 +284,13 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
                 "Transfer completed successfully"
             );
         } catch Error(string memory reason) {
-            // Update transfer status to failed
             transfers[transferId].status = TransferStatus.FAILED;
             emit TransferStatusUpdated(
                 transferId,
                 TransferStatus.FAILED,
                 reason
             );
-            // Revert with the specific error from the core router
+            // Revert with error from the core router
             revert(
                 string(
                     abi.encodePacked("Cross-chain transfer failed: ", reason)
@@ -304,12 +304,18 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
                 TransferStatus.FAILED,
                 "Transfer failed unexpectedly"
             );
-            // Catch any other unexpected errors
             revert("Cross-chain transfer failed unexpectedly");
         }
     }
 
-    // Fallback and receive functions
+    /**
+     * @notice Get total number of transfers
+     * @return Total number of transfers initiated
+     */
+    function getTotalTransfers() external view returns (uint256) {
+        return totalTransfers;
+    }
+
     receive() external payable {}
 
     fallback() external payable {}

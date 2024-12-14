@@ -36,7 +36,7 @@ const Header: React.FC = () => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
               >
-                NFT Mart
+                HemSwap
               </motion.span>
             </Link>
           </div>
@@ -52,23 +52,22 @@ const Header: React.FC = () => {
             </motion.button>
           </div>
           <nav className="hidden md:flex space-x-10">
-            <Link href="/explore">Explore</Link>
-            <Link href="/nfts">All Nfts</Link>
-            <Link href="nfts/create">Create</Link>
-            <Link href="/about">About</Link>
-            <Link href="/contact">Contact</Link>
+            <Link href="/bridge">Bridge</Link>
+            <Link href="/transfers">My Transfers</Link>
+            <Link href="/supported-tokens">Supported Tokens</Link>
+            <Link href="/fees">Bridge Fees</Link>
           </nav>
           <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
-            <ConnectButton
-              showBalance={false}
-              accountStatus={{
-                smallScreen: "avatar",
-                largeScreen: "full",
-              }}
-            />
+              <ConnectButton
+                showBalance={false}
+                accountStatus={{
+                  smallScreen: "avatar",
+                  largeScreen: "full",
+                }}
+              />
+            </div>
           </div>
         </div>
-      </div>
 
       <AnimatePresence>
         {isOpen && (
@@ -84,7 +83,7 @@ const Header: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Link href={"/"} className="text-xl font-bold text-white">
-                      NFT Mart
+                      HemSwap
                     </Link>
                   </div>
                   <div className="-mr-2">
@@ -101,11 +100,10 @@ const Header: React.FC = () => {
                 </div>
                 <div className="mt-6">
                   <nav className="grid gap-y-8">
-                    <NavLink href="/explore">Explore</NavLink>
-                    <NavLink href="/nfts">All Nfts</NavLink>
-                    <NavLink href="nfts/create">Create</NavLink>
-                    <NavLink href="/about">About</NavLink>
-                    <NavLink href="/contact">Contact</NavLink>
+                    <NavLink href="/bridge">Bridge</NavLink>
+                    <NavLink href="/transfers">My Transfers</NavLink>
+                    <NavLink href="/supported-tokens">Supported Tokens</NavLink>
+                    <NavLink href="/fees">Bridge Fees</NavLink>
                   </nav>
                 </div>
               </div>
