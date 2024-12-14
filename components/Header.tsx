@@ -1,27 +1,27 @@
-import Link from 'next/link'
+import Link from "next/link";
 
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { CgMenuLeft } from 'react-icons/cg'
-import { FaTimes } from 'react-icons/fa'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { CgMenuLeft } from "react-icons/cg";
+import { FaTimes } from "react-icons/fa";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const Header: React.FC = () => {
-  const [isOpen, setIsOpen] = useState<boolean>(false)
-  const [scrolled, setScrolled] = useState<boolean>(false)
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [scrolled, setScrolled] = useState<boolean>(false);
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <motion.header
       className={`fixed z-50 top-0 right-0 left-0 transition-all duration-300 ${
-        scrolled ? 'bg-black bg-opacity-20 backdrop-blur-md' : 'bg-transparent'
+        scrolled ? "bg-black bg-opacity-20 backdrop-blur-md" : "bg-transparent"
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -30,7 +30,7 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
           <div className="flex justify-start lg:w-0 lg:flex-1">
-            <Link href={'/'} className="text-xl font-bold text-white">
+            <Link href={"/"} className="text-xl font-bold text-white">
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -59,7 +59,13 @@ const Header: React.FC = () => {
             <Link href="/contact">Contact</Link>
           </nav>
           <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
-            <ConnectBtn networks />
+            <ConnectButton
+              showBalance={false}
+              accountStatus={{
+                smallScreen: "avatar",
+                largeScreen: "full",
+              }}
+            />
           </div>
         </div>
       </div>
@@ -77,7 +83,7 @@ const Header: React.FC = () => {
               <div className="pt-5 pb-6 px-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Link href={'/'} className="text-xl font-bold text-white">
+                    <Link href={"/"} className="text-xl font-bold text-white">
                       NFT Mart
                     </Link>
                   </div>
@@ -104,25 +110,25 @@ const Header: React.FC = () => {
                 </div>
               </div>
               <div className="py-6 px-5 space-y-6">
-              <ConnectButton />
+                <ConnectButton />
               </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </motion.header>
-  )
-}
+  );
+};
 
-const NavLink: React.FC<{ href: string; children: React.ReactNode; mobile?: boolean }> = ({
-  href,
-  children,
-  mobile,
-}) => (
+const NavLink: React.FC<{
+  href: string;
+  children: React.ReactNode;
+  mobile?: boolean;
+}> = ({ href, children, mobile }) => (
   <Link href={href} passHref legacyBehavior>
     <motion.span
       className={`text-base font-medium text-gray-300 hover:text-white cursor-pointer ${
-        mobile ? 'block' : ''
+        mobile ? "block" : ""
       }`}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
@@ -130,6 +136,6 @@ const NavLink: React.FC<{ href: string; children: React.ReactNode; mobile?: bool
       {children}
     </motion.span>
   </Link>
-)
+);
 
-export default Header
+export default Header;
