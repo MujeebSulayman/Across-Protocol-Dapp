@@ -1,42 +1,19 @@
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
-import { http } from 'viem';
-import {
-  arbitrum,
-  base,
-  mainnet,
-  optimism,
-  polygon,
-  sepolia,
-  goerli,
-  hardhat,
-} from 'wagmi/chains';
+import { http, createConfig } from 'wagmi'
+import { base, mainnet, optimism } from 'wagmi/chains'
+import { injected, metaMask, safe, walletConnect } from 'wagmi/connectors'
 
-// Ensure you have set WALLETCONNECT_PROJECT_ID in your .env file
-const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || '';
+const projectId = 'process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID'
 
-export const config = getDefaultConfig({
-  appName: 'Hemswap',
-  projectId,
-  chains: [
-    mainnet,
-    polygon,
-    arbitrum,
-    optimism,
-    base,
-    sepolia,
-    goerli,
-    hardhat,
+export const config = createConfig({
+  chains: [mainnet, base],
+  connectors: [
+    injected(),
+    walletConnect({ projectId }),
+    metaMask(),
+    safe(),
   ],
-  ssr: true,
-
   transports: {
     [mainnet.id]: http(),
-    [polygon.id]: http(),
-    [arbitrum.id]: http(),
-    [optimism.id]: http(),
     [base.id]: http(),
-    [sepolia.id]: http(),
-    [goerli.id]: http(),
-    [hardhat.id]: http(),
   },
-});
+})
