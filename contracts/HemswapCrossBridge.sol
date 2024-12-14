@@ -13,7 +13,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
  * @notice Cross-Chain Bridge implementing Across Protocol's infrastructure
  * @dev Supports cross-chain token transfers using Across Protocol's liquidity
  */
-
 contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
@@ -100,17 +99,11 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
 
         userTransferList = new bytes32[](returnCount);
 
-        // Return most recent transfers first
         for (uint256 i = 0; i < returnCount; i++) {
             userTransferList[i] = allUserTransfers[transferCount - 1 - i];
         }
     }
 
-    /**
-     * @notice Retrieve transfer details by transfer ID
-     * @param transferId Unique identifier of the transfer
-     * @return transfer Details of the cross-chain transfer
-     */
     function getTransferDetails(
         bytes32 transferId
     ) external view returns (CrossChainTransfer memory transfer) {
@@ -118,13 +111,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         require(transfer.transferId != 0, "Transfer not found");
     }
 
-    /**
-     * @notice Get estimated bridge fee from Across Protocol
-     * @param token Token address for transfer
-     * @param amount Transfer amount
-     * @param destinationChainId Target blockchain network ID
-     * @return estimatedFee Estimated fee in the native token
-     */
     function getEstimatedBridgeFee(
         address token,
         uint256 amount,
@@ -137,9 +123,6 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         );
     }
 
-    /**
-     * @notice Update Across Protocol contract addresses
-     */
     function updateProtocolAddresses(
         address _newCoreRouter,
         address _newSpokePool,
