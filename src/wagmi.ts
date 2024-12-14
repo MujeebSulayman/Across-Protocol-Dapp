@@ -1,19 +1,23 @@
-import { http, createConfig } from 'wagmi'
-import { base, mainnet, optimism } from 'wagmi/chains'
-import { injected, metaMask, safe, walletConnect } from 'wagmi/connectors'
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import {
+  arbitrum,
+  base,
+  mainnet,
+  optimism,
+  polygon,
+  sepolia,
+} from 'wagmi/chains';
 
-const projectId = 'process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID'
 
-export const config = createConfig({
-  chains: [mainnet, base],
-  connectors: [
-    injected(),
-    walletConnect({ projectId }),
-    metaMask(),
-    safe(),
+
+export const config = getDefaultConfig({
+  appName: 'RainbowKit App',
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID as string,
+  chains: [
+    mainnet,
+    polygon,
+    sepolia,
+
   ],
-  transports: {
-    [mainnet.id]: http(),
-    [base.id]: http(),
-  },
-})
+  ssr: true,
+});
