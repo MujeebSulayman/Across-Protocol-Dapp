@@ -49,15 +49,20 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
     // Total transfers
     uint256 public totalTransfers;
 
+    //  Events
     event TransferInitiated(
         bytes32 indexed transferId,
         address indexed sender,
         address indexed recipient,
-        address token,
-        uint256 amount,
+        address inputToken,
+        address outputToken,
+        uint256 inputAmount,
+        uint256 outputAmount,
         uint256 sourceChain,
         uint256 destinationChain,
-        uint256 timestamp
+        uint32 quoteTimestamp,
+        uint32 fillDeadline,
+        uint32 exclusivityDeadline
     );
 
     event TransferStatusUpdated(
@@ -91,16 +96,16 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         uint256 limit
     ) external view returns (bytes32[] memory userTransferList) {
         bytes32[] memory allUserTransfers = userTransfers[user];
-
         uint256 transferCount = allUserTransfers.length;
-        uint256 returnCount = limit > 0 && limit < transferCount
-            ? limit
+        uint256 returnCount = limit > 0 && limit < transferCount 
+            ? limit 
             : transferCount;
 
         userTransferList = new bytes32[](returnCount);
-
+        
+        // More efficient retrieval of recent transfers
         for (uint256 i = 0; i < returnCount; i++) {
-            userTransferList[i] = allUserTransfers[transferCount - 1 - i];
+            userTransferList[i] = allUserTransfers[transferCount - returnCount + i];
         }
     }
 
@@ -108,7 +113,7 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         bytes32 transferId
     ) external view returns (CrossChainTransfer memory transfer) {
         transfer = transfers[transferId];
-        require(transfer.transferId != 0, "Transfer not found");
+        require(transfer.sender != address(0), "Transfer not found");
     }
 
     function getEstimatedBridgeFee(
@@ -137,82 +142,77 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         hubPool = _newHubPool;
     }
 
-    function resetTokenApproval(address token, address spender) external {
-        IERC20(token).forceApprove(spender, 0);
+    function resetTokenApproval(address token, address spender) external nonReentrant {
+        IERC20(token).safeApprove(spender, 0);
     }
 
     function safeTokenApprove(
         address token,
         address spender,
         uint256 amount
-    ) external {
-        IERC20(token).forceApprove(spender, 0);
-        IERC20(token).safeIncreaseAllowance(spender, amount);
+    ) external nonReentrant {
+        IERC20(token).safeApprove(spender, amount);
     }
 
-    function bridgeTokens(
+
+    function bridgeTokensV3(
         address token,
         uint256 amount,
         address recipient,
-        uint256 destinationChainId
+        uint256 destinationChainId,
+        address outputToken,
+        address exclusiveRelayer
     ) external payable nonReentrant {
         require(amount > 0, "Invalid transfer amount");
         require(recipient != address(0), "Invalid recipient");
-
         require(token.code.length > 0, "Invalid token address");
+        require(outputToken == address(0) || outputToken.code.length > 0, "Invalid output token");
 
-        uint256 senderBalance = IERC20(token).balanceOf(msg.sender);
+        // Calculate estimated output amount and fee
+        uint256 estimatedFee = coreRouter.calculateDepositV3Fee(
+            token,
+            amount,
+            destinationChainId
+        );
+        uint256 outputAmount = amount - estimatedFee;
+
+        // Transfer tokens from sender to contract
+        IERC20 inputToken = IERC20(token);
+        uint256 senderBalance = inputToken.balanceOf(msg.sender);
         require(senderBalance >= amount, "Insufficient token balance");
 
-        uint256 currentAllowance = IERC20(token).allowance(
+        uint256 currentAllowance = inputToken.allowance(
             msg.sender,
             address(this)
         );
         require(currentAllowance >= amount, "Insufficient token allowance");
 
-        bool transferSuccess = IERC20(token).transferFrom(
-            msg.sender,
-            address(this),
-            amount
-        );
-        require(transferSuccess, "Token transfer failed");
+        inputToken.safeTransferFrom(msg.sender, address(this), amount);
 
-        // Verify the contract received the correct amount
-        uint256 receivedBalance = IERC20(token).balanceOf(address(this));
-        require(
-            receivedBalance >= amount,
-            "Received less tokens than expected"
-        );
+        // Approve core router
+        inputToken.safeApprove(address(coreRouter), amount);
 
-        // Approve core router with additional safety checks
-        IERC20(token).forceApprove(address(coreRouter), 0);
-        bool approveSuccess = IERC20(token).safeIncreaseAllowance(
-            address(coreRouter),
-            amount
-        );
-        require(approveSuccess, "Token approval failed");
+        uint32 quoteTimestamp = uint32(block.timestamp);
+        uint32 fillDeadline = uint32(block.timestamp + 7 days);
+        uint32 exclusivityDeadline = exclusiveRelayer != address(0) 
+            ? uint32(block.timestamp + 1 hours) 
+            : 0;
 
-        // Verify approval was successful
-        uint256 routerAllowance = IERC20(token).allowance(
-            address(this),
-            address(coreRouter)
-        );
-        require(routerAllowance >= amount, "Router approval failed");
-
-        // Generate unique transfer ID
-        bytes32 transferId = keccak256(
-            abi.encodePacked(
-                msg.sender,
-                recipient,
-                token,
-                amount,
-                destinationChainId,
-                block.timestamp
-            )
+        // Bridge tokens via Across Protocol
+        bytes32 transferId = coreRouter.depositV3(
+            recipient,
+            token,
+            amount,
+            destinationChainId,
+            outputToken,
+            exclusiveRelayer,
+            quoteTimestamp,
+            fillDeadline,
+            exclusivityDeadline
         );
 
-        // Store transfer information
-        transfers[transferId] = CrossChainTransfer({
+        // Store transfer details
+        CrossChainTransfer memory newTransfer = CrossChainTransfer({
             transferId: transferId,
             sender: msg.sender,
             recipient: recipient,
@@ -224,71 +224,37 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
             status: TransferStatus.INITIATED
         });
 
+        transfers[transferId] = newTransfer;
         userTransfers[msg.sender].push(transferId);
-        userTransfers[recipient].push(transferId);
-
         totalTransfers++;
 
+        // Emit transfer initiated event
         emit TransferInitiated(
             transferId,
             msg.sender,
             recipient,
             token,
+            outputToken,
             amount,
+            outputAmount,
             block.chainid,
             destinationChainId,
-            block.timestamp
+            quoteTimestamp,
+            fillDeadline,
+            exclusivityDeadline
         );
-
-        IERC20(token).forceApprove(address(this), 0);
-
-        // Execute cross-chain transfer via Across Protocol
-        try
-            coreRouter.depositV3{value: msg.value}(
-                recipient,
-                token,
-                amount,
-                destinationChainId,
-                abi.encode(transferId),
-                0
-            )
-        {
-            // Update transfer status
-            transfers[transferId].status = TransferStatus.COMPLETED;
-            emit TransferStatusUpdated(
-                transferId,
-                TransferStatus.COMPLETED,
-                "Transfer completed successfully"
-            );
-        } catch Error(string memory reason) {
-            transfers[transferId].status = TransferStatus.FAILED;
-            emit TransferStatusUpdated(
-                transferId,
-                TransferStatus.FAILED,
-                reason
-            );
-            // Revert with error from the core router
-            revert(
-                string(
-                    abi.encodePacked("Cross-chain transfer failed: ", reason)
-                )
-            );
-        } catch {
-            transfers[transferId].status = TransferStatus.FAILED;
-            emit TransferStatusUpdated(
-                transferId,
-                TransferStatus.FAILED,
-                "Transfer failed unexpectedly"
-            );
-            revert("Cross-chain transfer failed unexpectedly");
-        }
     }
 
-    function getTotalTransfers() external view returns (uint256) {
-        return totalTransfers;
+    function handleV3AcrossMessage(
+        address tokenSent,
+        uint256 amount,
+        address relayer,
+        bytes memory message
+    ) external {
+        emit TransferStatusUpdated(
+            keccak256(abi.encodePacked(tokenSent, amount, relayer)),
+            TransferStatus.COMPLETED,
+            "Cross-chain transfer received"
+        );
     }
-
-    receive() external payable {}
-
-    fallback() external payable {}
 }
