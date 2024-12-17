@@ -30,7 +30,7 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
           <div className="flex justify-start lg:w-0 lg:flex-1">
-            <Link href={"/"} className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            <Link href={"/"} className="text-web3-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -51,7 +51,7 @@ const Header: React.FC = () => {
               <CgMenuLeft className="h-6 w-6" aria-hidden="true" />
             </motion.button>
           </div>
-          <nav className="hidden md:flex space-x-10 text-gray-700 font-semibold">
+          <nav className="hidden md:flex space-x-10 text-gray-700 font-semibold text-web3-base">
             <Link href="/bridge" className="hover:text-blue-600 transition-colors">Cross-Chain Bridge</Link>
             <Link href="/transfers" className="hover:text-blue-600 transition-colors">Transfer History</Link>
             <Link href="/supported-tokens" className="hover:text-blue-600 transition-colors">Multi-Chain Tokens</Link>
