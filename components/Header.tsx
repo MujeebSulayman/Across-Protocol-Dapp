@@ -30,7 +30,7 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4 md:justify-start md:space-x-10">
           <div className="flex justify-start lg:w-0 lg:flex-1">
-            <Link href={"/"} className="text-web3-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+            <Link href={"/"} className="text-web3-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 tracking-tight">
               <motion.span
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -52,9 +52,9 @@ const Header: React.FC = () => {
             </motion.button>
           </div>
           <nav className="hidden md:flex space-x-10 text-gray-700 font-semibold text-web3-base">
-            <Link href="/bridge" className="hover:text-blue-600 transition-colors">Cross-Chain Bridge</Link>
-            <Link href="/transfers" className="hover:text-blue-600 transition-colors">Transfer History</Link>
-            <Link href="/supported-tokens" className="hover:text-blue-600 transition-colors">Multi-Chain Tokens</Link>
+            <Link href="/bridge" className="hover:text-blue-600 transition-colors font-inter">Cross-Chain Bridge</Link>
+            <Link href="/transfers" className="hover:text-blue-600 transition-colors font-inter">Transfer History</Link>
+            <Link href="/supported-tokens" className="hover:text-blue-600 transition-colors font-inter">Multi-Chain Tokens</Link>
           </nav>
           <div className="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
               <ConnectButton
@@ -77,11 +77,11 @@ const Header: React.FC = () => {
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="rounded-lg shadow-lg ring-1 ring-blue-500 ring-opacity-20 bg-gradient-to-br from-blue-900 to-purple-900 divide-y-2 divide-blue-800">
+            <div className="rounded-lg shadow-lg ring-1 ring-black ring-opacity-20 bg-black divide-y-2 divide-gray-800">
               <div className="pt-5 pb-6 px-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Link href={"/"} className="text-2xl font-bold text-white">
+                    <Link href={"/"} className="text-lg font-normal text-white">
                       Hemswap
                     </Link>
                   </div>
@@ -90,7 +90,7 @@ const Header: React.FC = () => {
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setIsOpen(!isOpen)}
-                      className="bg-blue-800 rounded-md p-2 inline-flex items-center justify-center text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500"
+                      className="bg-gray-800 rounded-md p-2 inline-flex items-center justify-center text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-purple-500"
                     >
                       <span className="sr-only">Close menu</span>
                       <FaTimes className="h-6 w-6" aria-hidden="true" />
@@ -102,7 +102,6 @@ const Header: React.FC = () => {
                     <NavLink href="/bridge">Cross-Chain Bridge</NavLink>
                     <NavLink href="/transfers">Transfer History</NavLink>
                     <NavLink href="/supported-tokens">Multi-Chain Tokens</NavLink>
-              
                   </nav>
                 </div>
               </div>
