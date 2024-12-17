@@ -6,11 +6,9 @@ const path = require("path");
 async function main() {
   const network = hre.network.name;
 
-  // Ensure deployments directory exists
   const deploymentsDir = path.join(__dirname, "..", "deployments", network);
   fs.mkdirSync(deploymentsDir, { recursive: true });
 
-  // Get the contract factories
   const HemswapCrossBridge = await ethers.getContractFactory(
     "HemswapCrossBridge"
   );
@@ -23,15 +21,12 @@ async function main() {
   const HUB_POOL_ADDRESS =
     process.env[`${network.toUpperCase()}_HUB_POOL_ADDRESS`];
 
-  // Validate addresses
   if (!CORE_ROUTER_ADDRESS || !SPOKE_POOL_ADDRESS || !HUB_POOL_ADDRESS) {
     throw new Error(`Missing contract addresses for network: ${network}`);
   }
 
-  // Get deployer
   const [deployer] = await ethers.getSigners();
 
-  // Deploy the contract
   console.log(`Deploying HemswapCrossBridge to ${network}...`);
   const hemswapCrossBridge = await HemswapCrossBridge.deploy(
     CORE_ROUTER_ADDRESS,
@@ -39,7 +34,6 @@ async function main() {
     HUB_POOL_ADDRESS
   );
 
-  // Wait for deployment
   await hemswapCrossBridge.deployed();
 
   const deploymentDetails = {

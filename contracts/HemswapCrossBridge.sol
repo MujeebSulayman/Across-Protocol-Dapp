@@ -40,13 +40,9 @@ contract HemswapCrossBridge is Ownable, ReentrancyGuard {
         FAILED
     }
 
-    // Store transfers
     mapping(bytes32 => CrossChainTransfer) public transfers;
-
-    // Track user's transfers
     mapping(address => bytes32[]) public userTransfers;
 
-    // Total transfers
     uint256 public totalTransfers;
 
     //  Events
