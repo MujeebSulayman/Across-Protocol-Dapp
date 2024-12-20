@@ -1,0 +1,65 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {"internalType": "address", "name": "token", "type": "address"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "address", "name": "recipient", "type": "address"},
+        {"internalType": "uint256", "name": "destinationChainId", "type": "uint256"},
+        {"internalType": "address", "name": "outputToken", "type": "address"},
+        {"internalType": "address", "name": "exclusiveRelayer", "type": "address"}
+      ],
+      "name": "bridgeTokensV3",
+      "outputs": [],
+      "stateMutability": "payable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "user", "type": "address"},
+        {"internalType": "uint256", "name": "limit", "type": "uint256"}
+      ],
+      "name": "getUserTransfers",
+      "outputs": [{"internalType": "bytes32[]", "name": "userTransferList", "type": "bytes32[]"}],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "bytes32", "name": "transferId", "type": "bytes32"}
+      ],
+      "name": "getTransferDetails",
+      "outputs": [
+        {
+          "components": [
+            {"internalType": "bytes32", "name": "transferId", "type": "bytes32"},
+            {"internalType": "address", "name": "sender", "type": "address"},
+            {"internalType": "address", "name": "recipient", "type": "address"},
+            {"internalType": "address", "name": "token", "type": "address"},
+            {"internalType": "uint256", "name": "amount", "type": "uint256"},
+            {"internalType": "uint256", "name": "sourceChain", "type": "uint256"},
+            {"internalType": "uint256", "name": "destinationChain", "type": "uint256"},
+            {"internalType": "uint256", "name": "timestamp", "type": "uint256"},
+            {"internalType": "enum HemswapCrossBridge.TransferStatus", "name": "status", "type": "uint8"}
+          ],
+          "internalType": "struct HemswapCrossBridge.CrossChainTransfer",
+          "name": "transfer",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {"internalType": "address", "name": "token", "type": "address"},
+        {"internalType": "uint256", "name": "amount", "type": "uint256"},
+        {"internalType": "uint256", "name": "destinationChainId", "type": "uint256"}
+      ],
+      "name": "getEstimatedBridgeFee",
+      "outputs": [{"internalType": "uint256", "name": "estimatedFee", "type": "uint256"}],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
